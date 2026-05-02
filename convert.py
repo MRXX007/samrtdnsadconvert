@@ -28,8 +28,9 @@ def main():
         if not line or line.startswith("#"):
             continue
         
-        # 去掉开头 0.0.0.0 / 127.0.0.1 前缀
+        # 去掉开头的 0.0.0.0 或 127.0.0.1 前缀
         if line.startswith("0.0.0.0") or line.startswith("127.0.0.1"):
+            # 分割，取后面的域名
             parts = line.split()
             if len(parts) >= 2:
                 line = parts[1]
@@ -40,21 +41,6 @@ def main():
         out.append(f"address /{line}/ #")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write("\n".join(out))
-
-if __name__ == "__main__":
-    main()
-        
-        if need_exclude(line):
-            continue
-        
-        out.append(f"address /{line}/ #")
-
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write("\n".join(out))
-
-if __name__ == "__main__":
-    main()
         f.write("\n".join(out))
 
 if __name__ == "__main__":

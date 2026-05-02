@@ -4,12 +4,16 @@ import re
 SOURCE_URL = "https://raw.githubusercontent.com/lingeringsound/10007_auto/master/all"
 OUTPUT_FILE = "ad-smartdns.conf"
 
-# 自定义白名单：不拦截
+# 白名单：放行不拦截
 EXCLUDE_KEYWORDS = [
-    "umsns"
+    "umeng",
+    "umsns",
+    "123yunpan",
+    "123yp",
+    "yunpan.123"
 ]
 
-# 本地关键字直接过滤
+# 要过滤的本地关键字
 LOCAL_KEYWORDS = [
     "localhost",
     "ip6-localhost",
@@ -17,10 +21,11 @@ LOCAL_KEYWORDS = [
     "hostname"
 ]
 
-# 严格匹配纯IP、IPv6
-IP_REGEX = re.compile(
-    r'^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F:]+$'
-)
+# 匹配纯IP
+IP_REGEX = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F:]+$')
+
+# 匹配合法域名
+DOMAIN_REGEX = re.compile(r'^[a-zA-Z0-9_-]+\.[a-zA-Z0-9._-]+$')
 
 def need_exclude(domain):
     d = domain.lower().strip()
@@ -29,8 +34,11 @@ def need_exclude(domain):
             return True
     return False
 
-def is_ip_or_ipv6(s):
+def is_ip(s):
     return bool(IP_REGEX.match(s.strip()))
+
+def is_valid_domain(s):
+    return bool(DOMAIN_REGEX.match(s.strip()))
 
 def main():
     resp = requests.get(SOURCE_URL, timeout=15)
@@ -41,27 +49,25 @@ def main():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
-        
-        # 整行有空格 直接丢弃
-        if " " in line:
-            continue
-        
-        # 剥离 0.0.0.0 / 127.0.0.1 前缀
-        if line.startswith(("0.0.0.0", "127.0.0.1")):
-            parts = line.split()
-            if len(parts) >= 2:
-                line = parts[1]
 
-        # 是IP/IPv6 直接跳过
-        if is_ip_or_ipv6(line):
+        # 拆分：不管前面是0.0.0.0还是IP 域名，只拿最后一截当域名
+        parts = line.split()
+        domain = parts[-1]
+
+        # 是IP直接跳过
+        if is_ip(domain):
             continue
-        
+
+        # 不是合法域名跳过
+        if not is_valid_domain(domain):
+            continue
+
         # 白名单跳过
-        if need_exclude(line):
+        if need_exclude(domain):
             continue
-        
-        # 标准格式 无空格
-        out.append(f"address /{line}/#")
+
+        # 标准格式，无空格
+        out.append(f"address /{domain}/#")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write("\n".join(out))

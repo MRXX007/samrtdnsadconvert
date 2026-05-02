@@ -1,0 +1,2 @@
+# samrtdnsadconvert
+smartdns-adrules

@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
       - name: Run convert script
         run: python3 convert.py
@@ -20,5 +22,10 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
           git add .
+          # 检测是否有变更，无变更直接跳过
+          if git diff --cached --quiet; then
+            echo "No changes to commit, skip."
+            exit 0
+          fi
           git commit -m "Auto update smartdns rule"
           git push
